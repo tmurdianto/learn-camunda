@@ -56,6 +56,28 @@ jmeter -n -t jmeter/loan-process-test.jmx -l results.jtl
 - Ramp-up Period: 300 seconds
 - Test Duration: 1800 seconds (30 minutes)
 
+## Running with Docker
+
+For containerized execution with monitoring, use the benchmark infrastructure in `../resources/benchmarks/`:
+
+```bash
+cd ../resources/benchmarks
+chmod +x run-benchmarks.sh
+./run-benchmarks.sh
+```
+
+This will:
+1. Start InfluxDB and Grafana
+2. Run k6 tests
+3. Run JMeter tests
+4. Generate reports
+
+See [Benchmark Infrastructure Documentation](../resources/benchmarks/benchmarks.md) for detailed information about:
+- Infrastructure setup
+- Monitoring configuration
+- Results analysis
+- Troubleshooting
+
 ## Metrics Collected
 
 ### Performance Metrics
