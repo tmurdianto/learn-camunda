@@ -63,8 +63,8 @@ services:
       - INFLUXDB_USERNAME=admin
       - INFLUXDB_PASSWORD=admin123
       - CAMUNDA_URL=http://host.docker.internal:8081
-      - K6_ITERATIONS=1000
-      - K6_VUS=50
+      - K6_ITERATIONS=5000
+      - K6_VUS=500
       - K6_DURATION=30m
     depends_on:
       - influxdb
@@ -76,9 +76,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 4G
+          memory: 8G
         reservations:
-          memory: 2G
+          memory: 4G
 
   # JMeter Load Generator (Production Configuration)
   jmeter:
@@ -86,10 +86,10 @@ services:
     volumes:
       - ../../benchmarks/jmeter:/jmeter
     environment:
-      - HEAP=-Xms2g -Xmx4g
+      - HEAP=-Xms4g -Xmx8g
       - CAMUNDA_URL=http://host.docker.internal:8081
-      - JMETER_THREADS=50
-      - JMETER_RAMPUP=300
+      - JMETER_THREADS=500
+      - JMETER_RAMPUP=60
       - JMETER_DURATION=1800
       - INFLUXDB_URL=http://influxdb:8086/write?db=k6
       - INFLUXDB_USERNAME=admin
@@ -104,9 +104,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 4G
+          memory: 8G
         reservations:
-          memory: 2G
+          memory: 4G
 
 networks:
   benchmark-network:

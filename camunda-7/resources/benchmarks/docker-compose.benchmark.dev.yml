@@ -48,9 +48,9 @@ services:
     environment:
       - K6_OUT=influxdb=http://influxdb:8086/k6
       - CAMUNDA_URL=http://host.docker.internal:8080
-      - K6_ITERATIONS=10
-      - K6_VUS=5
-      - K6_DURATION=5m
+      - K6_ITERATIONS=1000
+      - K6_VUS=200
+      - K6_DURATION=10m
     depends_on:
       - influxdb
     command: run /scripts/loan-process-test.js
@@ -65,11 +65,11 @@ services:
     volumes:
       - ../../benchmarks/jmeter:/jmeter
     environment:
-      - HEAP=-Xms512m -Xmx1g
+      - HEAP=-Xms1g -Xmx2g
       - CAMUNDA_URL=http://host.docker.internal:8080
-      - JMETER_THREADS=5
-      - JMETER_RAMPUP=60
-      - JMETER_DURATION=300
+      - JMETER_THREADS=200
+      - JMETER_RAMPUP=30
+      - JMETER_DURATION=600
       - INFLUXDB_URL=http://influxdb:8086/write?db=k6
     depends_on:
       - influxdb
