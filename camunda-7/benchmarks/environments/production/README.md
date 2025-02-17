@@ -68,7 +68,8 @@ jmeter -n -t jmeter/loan-process-test.jmx -l results.jtl -JCAMUNDA_URL=http://lo
 
 ### Docker-based Tests
 ```bash
-./run-benchmarks.sh prod
+cd resources/benchmarks
+./run-benchmarks-prod.sh
 ```
 
 ## Access Points
