@@ -64,15 +64,16 @@ services:
     image: justb4/jmeter:latest
     volumes:
       - ../../benchmarks/jmeter:/jmeter
-      - ./jmeter/results:/results
     environment:
       - HEAP=-Xms512m -Xmx1g
       - CAMUNDA_URL=http://host.docker.internal:8080
       - JMETER_THREADS=5
       - JMETER_RAMPUP=60
       - JMETER_DURATION=300
+      - INFLUXDB_URL=http://influxdb:8086/write?db=k6
     depends_on:
       - influxdb
+    command: -n -t /jmeter/loan-process-test.jmx
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
