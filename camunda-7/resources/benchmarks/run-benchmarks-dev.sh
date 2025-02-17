@@ -35,6 +35,13 @@ check_health() {
     return 1
 }
 
+# Validate connections first
+print_status "$YELLOW" "Validating connections..."
+if ! ./validate-connection.sh dev; then
+    print_status "$RED" "Connection validation failed. Please fix the issues and try again."
+    exit 1
+fi
+
 # Create results directory
 mkdir -p $RESULTS_DIR $REPORT_DIR
 

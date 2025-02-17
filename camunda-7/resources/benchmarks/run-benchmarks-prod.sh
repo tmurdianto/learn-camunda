@@ -58,6 +58,13 @@ check_resources() {
     return 0
 }
 
+# Validate connections first
+print_status "$YELLOW" "Validating connections..."
+if ! ./validate-connection.sh prod; then
+    print_status "$RED" "Connection validation failed. Please fix the issues and try again."
+    exit 1
+fi
+
 # Check system resources
 if ! check_resources; then
     read -p "Continue despite resource warnings? (y/n) " -n 1 -r

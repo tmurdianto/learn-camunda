@@ -16,6 +16,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - benchmark-network
 
   grafana:
     image: grafana/grafana:latest
@@ -35,6 +37,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - benchmark-network
 
   # k6 Load Generator (Development Configuration)
   k6:
@@ -52,6 +56,8 @@ services:
     command: run /scripts/loan-process-test.js
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - benchmark-network
 
   # JMeter Load Generator (Development Configuration)
   jmeter:
@@ -69,6 +75,12 @@ services:
       - influxdb
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - benchmark-network
+
+networks:
+  benchmark-network:
+    driver: bridge
 
 volumes:
   influxdb_data:

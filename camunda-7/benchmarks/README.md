@@ -2,6 +2,50 @@
 
 This directory contains benchmark tests for Camunda 7 using k6 and JMeter. The tests focus on the loan application process, which is typically the most resource-intensive due to its complex workflow and service task integrations.
 
+## Prerequisites
+
+### Required Tools
+- Docker and Docker Compose
+- k6 (for standalone tests)
+- JMeter (for standalone tests)
+- Git Bash (for Windows users)
+- Camunda Modeler (for viewing/editing BPMN)
+
+### Process Deployment
+
+Before running the benchmarks, you need to deploy the loan application process:
+
+1. **Using REST API**:
+```bash
+# For Development Environment
+curl -X POST -F "deployment-name=loan-application" \
+     -F "deploy-changed-only=true" \
+     -F "loan_application_process.bpmn=@processes/loan_application_process.bpmn" \
+     http://localhost:8080/engine-rest/deployment/create
+
+# For Production Environment
+curl -X POST -F "deployment-name=loan-application" \
+     -F "deploy-changed-only=true" \
+     -F "loan_application_process.bpmn=@processes/loan_application_process.bpmn" \
+     http://localhost:8081/engine-rest/deployment/create
+```
+
+2. **Using Camunda Modeler**:
+   - Open `processes/loan_application_process.bpmn` in Camunda Modeler
+   - Click "Deploy" button
+   - Configure deployment:
+     - REST Endpoint: 
+       - Development: `http://localhost:8080/engine-rest`
+       - Production: `http://localhost:8081/engine-rest`
+     - Deployment Name: `loan-application`
+
+3. **Verify Deployment**:
+   - Open Camunda Cockpit
+     - Development: `http://localhost:8080/camunda/app/cockpit`
+     - Production: `http://localhost:8081/camunda/app/cockpit`
+   - Navigate to Processes
+   - Verify "Loan Application Process" is listed
+
 ## Test Scenarios
 
 ### Loan Application Process
@@ -27,50 +71,6 @@ We provide two distinct environments for benchmarking:
 - PostgreSQL and Elasticsearch
 - Suitable for benchmarking
 
-## Tools
-
-### 1. k6
-- Modern, developer-centric performance testing tool
-- JavaScript-based test scripts
-- Real-time metrics
-- Cloud integration
-
-### 2. JMeter
-- Traditional load testing tool
-- Comprehensive test plans
-- Detailed reporting
-- Rich plugin ecosystem
-
-## Metrics Collection
-
-### Performance Metrics
-1. Response Times
-   - Average response time
-   - 95th percentile
-   - 99th percentile
-
-2. Throughput
-   - Requests per second
-   - Process instances started
-   - Tasks completed
-
-3. Error Rates
-   - Failed requests
-   - Process errors
-   - Task failures
-
-### Resource Usage
-1. System Metrics
-   - CPU usage
-   - Memory consumption
-   - Disk I/O
-   - Network traffic
-
-2. Database Metrics
-   - Connection pool usage
-   - Query response times
-   - Transaction throughput
-
 ## Directory Structure
 ```
 benchmarks/
@@ -79,6 +79,8 @@ benchmarks/
 │   │   └── README.md
 │   └── production/
 │       └── README.md
+├── processes/
+│   └── loan_application_process.bpmn
 ├── k6/
 │   ├── loan-process-test.js
 │   └── README.md
@@ -90,15 +92,28 @@ benchmarks/
 
 ## Getting Started
 
-1. Choose your environment:
-   - [Development Environment Guide](environments/development/README.md)
-   - [Production Environment Guide](environments/production/README.md)
+1. **Deploy Process**:
+   - Follow the process deployment steps above
+   - Verify deployment in Camunda Cockpit
 
-2. Follow the environment-specific setup instructions
+2. **Validate Environment**:
+```bash
+cd resources/benchmarks
+./validate-connection.sh dev  # or prod for production
+```
 
-3. Run the benchmarks using provided scripts
+3. **Run Benchmarks**:
+```bash
+# Development Environment
+./run-benchmarks-dev.sh
 
-4. Monitor and analyze results
+# Production Environment
+./run-benchmarks-prod.sh
+```
+
+4. **View Results**:
+   - k6: Grafana Dashboard (http://localhost:3000)
+   - JMeter: `./jmeter/results/report`
 
 ## Contributing
 

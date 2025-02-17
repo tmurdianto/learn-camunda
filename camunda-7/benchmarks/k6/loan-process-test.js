@@ -34,7 +34,8 @@ function generateLoanData() {
 
 // Main test scenario
 export default function () {
-    const baseUrl = 'http://localhost:8080/engine-rest';
+    // Get base URL from environment variable or use default
+    const baseUrl = __ENV.CAMUNDA_URL || 'http://host.docker.internal:8080';
     const headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -42,7 +43,7 @@ export default function () {
 
     // 1. Start process instance
     let processResponse = http.post(
-        `${baseUrl}/process-definition/key/loan_application_process/start`,
+        `${baseUrl}/engine-rest/process-definition/key/loan_application_process/start`,
         JSON.stringify(generateLoanData()),
         { headers }
     );
@@ -55,30 +56,30 @@ export default function () {
         processInstancesStarted.add(1);
         const processInstanceId = JSON.parse(processResponse.body).id;
 
-        // 2. Get task for credit check
+        // 2. Get task for the process instance
         let taskResponse = http.get(
-            `${baseUrl}/task?processInstanceId=${processInstanceId}`,
+            `${baseUrl}/engine-rest/task?processInstanceId=${processInstanceId}`,
             { headers }
         );
+
+        check(taskResponse, {
+            'task retrieved successfully': (r) => r.status === 200 && JSON.parse(r.body).length > 0,
+        });
 
         if (taskResponse.status === 200) {
             const tasks = JSON.parse(taskResponse.body);
             if (tasks.length > 0) {
                 const taskId = tasks[0].id;
 
-                // 3. Complete credit check task
-                const creditCheckData = {
-                    variables: {
-                        creditScore: { value: Math.floor(Math.random() * 300) + 500, type: 'Long' },
-                        monthlyIncome: { value: Math.floor(Math.random() * 5000) + 3000, type: 'Long' },
-                        existingDebts: { value: Math.floor(Math.random() * 20000), type: 'Long' },
-                        creditCheckPassed: { value: true, type: 'Boolean' },
-                    },
-                };
-
+                // 3. Complete the task
                 let completeResponse = http.post(
-                    `${baseUrl}/task/${taskId}/complete`,
-                    JSON.stringify(creditCheckData),
+                    `${baseUrl}/engine-rest/task/${taskId}/complete`,
+                    JSON.stringify({
+                        variables: {
+                            approved: { value: true, type: 'Boolean' },
+                            comments: { value: 'Approved in k6 test', type: 'String' },
+                        },
+                    }),
                     { headers }
                 );
 
@@ -93,5 +94,6 @@ export default function () {
         }
     }
 
+    // Wait between iterations
     sleep(1);
 }

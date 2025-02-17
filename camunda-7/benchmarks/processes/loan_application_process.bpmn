@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+                  xmlns:camunda="http://camunda.org/schema/1.0/bpmn" 
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+                  id="Definitions_0fr9mxs" 
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="loan_application_process" name="Loan Application Process" isExecutable="true" camunda:historyTimeToLive="P30D">
+    <bpmn:startEvent id="StartEvent_1" name="Loan Application Received">
+      <bpmn:outgoing>SequenceFlow_1fp17al</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1fp17al" sourceRef="StartEvent_1" targetRef="Activity_CreditCheck"/>
+    <bpmn:userTask id="Activity_CreditCheck" name="Review Credit Check" camunda:assignee="demo">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="approved" label="Approved?" type="boolean"/>
+          <camunda:formField id="comments" label="Comments" type="string"/>
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_1fp17al</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0wnb4ke</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_0wnb4ke" sourceRef="Activity_CreditCheck" targetRef="Gateway_Decision"/>
+    <bpmn:exclusiveGateway id="Gateway_Decision" name="Application Approved?">
+      <bpmn:incoming>SequenceFlow_0wnb4ke</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_Approved</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_Rejected</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_Approved" name="Yes" sourceRef="Gateway_Decision" targetRef="Activity_ProcessLoan">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_Rejected" name="No" sourceRef="Gateway_Decision" targetRef="Activity_RejectLoan">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${approved == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:serviceTask id="Activity_ProcessLoan" name="Process Loan" camunda:type="external" camunda:topic="processloan">
+      <bpmn:incoming>SequenceFlow_Approved</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_ToApproved</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_RejectLoan" name="Reject Loan" camunda:type="external" camunda:topic="rejectloan">
+      <bpmn:incoming>SequenceFlow_Rejected</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_ToRejected</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_Approved" name="Loan Approved">
+      <bpmn:incoming>SequenceFlow_ToApproved</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndEvent_Rejected" name="Loan Rejected">
+      <bpmn:incoming>SequenceFlow_ToRejected</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_ToApproved" sourceRef="Activity_ProcessLoan" targetRef="EndEvent_Approved"/>
+    <bpmn:sequenceFlow id="SequenceFlow_ToRejected" sourceRef="Activity_RejectLoan" targetRef="EndEvent_Rejected"/>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="loan_application_process">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_1" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="102" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="134" y="145" width="73" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_CreditCheck_di" bpmnElement="Activity_CreditCheck">
+        <dc:Bounds x="270" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Decision_di" bpmnElement="Gateway_Decision" isMarkerVisible="true">
+        <dc:Bounds x="455" y="95" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="449" y="65" width="62" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_ProcessLoan_di" bpmnElement="Activity_ProcessLoan">
+        <dc:Bounds x="590" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_RejectLoan_di" bpmnElement="Activity_RejectLoan">
+        <dc:Bounds x="590" y="190" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Approved_di" bpmnElement="EndEvent_Approved">
+        <dc:Bounds x="782" y="102" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="764" y="145" width="73" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Rejected_di" bpmnElement="EndEvent_Rejected">
+        <dc:Bounds x="782" y="212" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="764" y="255" width="73" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1fp17al_di" bpmnElement="SequenceFlow_1fp17al">
+        <di:waypoint x="188" y="120"/>
+        <di:waypoint x="270" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0wnb4ke_di" bpmnElement="SequenceFlow_0wnb4ke">
+        <di:waypoint x="370" y="120"/>
+        <di:waypoint x="455" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_Approved_di" bpmnElement="SequenceFlow_Approved">
+        <di:waypoint x="505" y="120"/>
+        <di:waypoint x="590" y="120"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="539" y="102" width="18" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_Rejected_di" bpmnElement="SequenceFlow_Rejected">
+        <di:waypoint x="480" y="145"/>
+        <di:waypoint x="480" y="230"/>
+        <di:waypoint x="590" y="230"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="488" y="185" width="15" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_ToApproved_di" bpmnElement="SequenceFlow_ToApproved">
+        <di:waypoint x="690" y="120"/>
+        <di:waypoint x="782" y="120"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_ToRejected_di" bpmnElement="SequenceFlow_ToRejected">
+        <di:waypoint x="690" y="230"/>
+        <di:waypoint x="782" y="230"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
