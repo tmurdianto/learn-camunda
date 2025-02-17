@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="loan_application_process" name="Loan Application with Forms" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Loan Application Started">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="applicantName" label="Applicant Name" type="string" required="true" />
+          <camunda:formField id="loanAmount" label="Loan Amount" type="long" required="true" />
+          <camunda:formField id="email" label="Email Address" type="string" required="true" />
+          <camunda:formField id="employmentStatus" label="Employment Status" type="enum" required="true">
+            <camunda:value id="employed" name="Employed" />
+            <camunda:value id="self-employed" name="Self Employed" />
+            <camunda:value id="unemployed" name="Unemployed" />
+          </camunda:formField>
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_CreditCheck" />
+    
+    <bpmn:userTask id="Task_CreditCheck" name="Perform Credit Check">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="creditScore" label="Credit Score" type="long" required="true" />
+          <camunda:formField id="monthlyIncome" label="Monthly Income" type="long" required="true" />
+          <camunda:formField id="existingDebts" label="Existing Debts" type="long" required="true" />
+          <camunda:formField id="creditCheckPassed" label="Credit Check Passed?" type="boolean" required="true" />
+          <camunda:formField id="notes" label="Additional Notes" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_CreditCheck" targetRef="Gateway_CreditDecision" />
+    
+    <bpmn:exclusiveGateway id="Gateway_CreditDecision" name="Credit Check Passed?">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_Passed</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Failed</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    
+    <bpmn:sequenceFlow id="Flow_Passed" name="Yes" sourceRef="Gateway_CreditDecision" targetRef="Task_FinalApproval">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${creditCheckPassed == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:sequenceFlow id="Flow_Failed" name="No" sourceRef="Gateway_CreditDecision" targetRef="Task_RejectionLetter">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${creditCheckPassed == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    
+    <bpmn:userTask id="Task_FinalApproval" name="Final Loan Approval">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="approvedAmount" label="Approved Amount" type="long" required="true" />
+          <camunda:formField id="interestRate" label="Interest Rate (%)" type="double" required="true" />
+          <camunda:formField id="loanTerm" label="Loan Term (months)" type="long" required="true" />
+          <camunda:formField id="approvalNotes" label="Approval Notes" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Passed</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:userTask id="Task_RejectionLetter" name="Prepare Rejection Letter">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="rejectionReason" label="Reason for Rejection" type="string" required="true" />
+          <camunda:formField id="suggestionForImprovement" label="Suggestions for Improvement" type="string" />
+          <camunda:formField id="reapplyPeriod" label="Recommended Wait Before Reapplying (months)" type="long" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Failed</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:userTask>
+    
+    <bpmn:endEvent id="EndEvent_Approved" name="Loan Approved">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:endEvent id="EndEvent_Rejected" name="Loan Rejected">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_FinalApproval" targetRef="EndEvent_Approved" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_RejectionLetter" targetRef="EndEvent_Rejected" />
+  </bpmn:process>
+</bpmn:definitions>

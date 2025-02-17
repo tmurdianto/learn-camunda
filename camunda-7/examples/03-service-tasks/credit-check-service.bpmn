@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="credit_check_service" name="Credit Check Service Integration" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Credit Check Required">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="applicantId" label="Applicant ID" type="string" required="true" />
+          <camunda:formField id="requestType" label="Request Type" type="enum" required="true">
+            <camunda:value id="full" name="Full Credit Report" />
+            <camunda:value id="basic" name="Basic Score Only" />
+          </camunda:formField>
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_ValidateInput" />
+
+    <bpmn:serviceTask id="Task_ValidateInput" name="Validate Input Data"
+      camunda:class="org.camunda.example.ValidateInputDelegate">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_ValidateInput" targetRef="Task_CallCreditAPI" />
+
+    <bpmn:serviceTask id="Task_CallCreditAPI" name="Call Credit API"
+      camunda:type="external"
+      camunda:topic="creditCheck">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_CallCreditAPI" targetRef="Gateway_CheckResponse" />
+
+    <bpmn:exclusiveGateway id="Gateway_CheckResponse" name="Check Response">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_Success</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Error</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:sequenceFlow id="Flow_Success" name="Success" sourceRef="Gateway_CheckResponse" targetRef="Task_ProcessResult">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${creditCheckSuccess == true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:sequenceFlow id="Flow_Error" name="Error" sourceRef="Gateway_CheckResponse" targetRef="Task_HandleError">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${creditCheckSuccess == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <bpmn:serviceTask id="Task_ProcessResult" name="Process Credit Result"
+      camunda:class="org.camunda.example.ProcessCreditResultDelegate">
+      <bpmn:incoming>Flow_Success</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_HandleError" name="Handle Error"
+      camunda:class="org.camunda.example.HandleErrorDelegate">
+      <bpmn:incoming>Flow_Error</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:endEvent id="EndEvent_Success" name="Credit Check Completed">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="EndEvent_Error" name="Credit Check Failed">
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_1" errorRef="Error_1" />
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_ProcessResult" targetRef="EndEvent_Success" />
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_HandleError" targetRef="EndEvent_Error" />
+  </bpmn:process>
+
+  <bpmn:error id="Error_1" name="CreditCheckError" errorCode="CREDIT_CHECK_ERROR" />
+</bpmn:definitions>
