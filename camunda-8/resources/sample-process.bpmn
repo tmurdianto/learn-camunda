@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<bpmn:definitions>
+  <bpmn:process id="order-process" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1"/>
+    <bpmn:sequenceFlow sourceRef="StartEvent_1" targetRef="Task_1"/>
+    <bpmn:serviceTask id="Task_1" name="Process Order">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="order-service" />
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow sourceRef="Task_1" targetRef="EndEvent_1"/>
+    <bpmn:endEvent id="EndEvent_1"/>
+  </bpmn:process>
+</bpmn:definitions>

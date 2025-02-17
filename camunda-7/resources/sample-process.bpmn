@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<bpmn2:definitions xmlns:bpmn2='http://www.omg.org/spec/BPMN/20100524/MODEL'>
+  <bpmn2:process id='loan-approval' name='Loan Approval Process'>
+    <bpmn2:startEvent id='start'/>
+    <bpmn2:sequenceFlow sourceRef='start' targetRef='approveTask'/>
+    <bpmn2:userTask id='approveTask' name='Approve Loan'/>
+    <bpmn2:sequenceFlow sourceRef='approveTask' targetRef='end'/>
+    <bpmn2:endEvent id='end'/>
+  </bpmn2:process>
+</bpmn2:definitions>
