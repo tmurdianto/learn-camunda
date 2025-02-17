@@ -3,6 +3,13 @@
 # Configuration
 DOCKER_COMPOSE="docker-compose -f docker-compose.benchmark.dev.yml"
 
+# Environment Variables
+export JMETER_INFLUXDB_HOST=influxdb
+export JMETER_INFLUXDB_PORT=8086
+export JMETER_INFLUXDB_DB=k6
+export JMETER_INFLUXDB_USER=admin
+export JMETER_INFLUXDB_PASSWORD=admin123
+
 # Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'

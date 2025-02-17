@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Monitoring Stack (Lightweight for Development)
   influxdb:
@@ -61,7 +59,9 @@ services:
 
   # JMeter Load Generator (Development Configuration)
   jmeter:
-    image: justb4/jmeter:latest
+    build:
+      context: ./jmeter
+      dockerfile: Dockerfile
     volumes:
       - ../../benchmarks/jmeter:/jmeter
     environment:
@@ -70,10 +70,14 @@ services:
       - JMETER_THREADS=200
       - JMETER_RAMPUP=30
       - JMETER_DURATION=600
-      - INFLUXDB_URL=http://influxdb:8086/write?db=k6
+      - JMETER_INFLUXDB_HOST=influxdb
+      - JMETER_INFLUXDB_PORT=8086
+      - JMETER_INFLUXDB_DB=k6
+      - JMETER_INFLUXDB_USER=admin
+      - JMETER_INFLUXDB_PASSWORD=admin123
     depends_on:
       - influxdb
-    command: -n -t /jmeter/loan-process-test.jmx
+    command: -n -t /jmeter/loan-process-test.jmx -Jinfluxdb.host=${JMETER_INFLUXDB_HOST} -Jinfluxdb.port=${JMETER_INFLUXDB_PORT} -Jinfluxdb.db=${JMETER_INFLUXDB_DB}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
