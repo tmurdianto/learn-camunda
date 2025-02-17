@@ -2,8 +2,6 @@
 
 # Configuration
 DOCKER_COMPOSE="docker-compose -f docker-compose.benchmark.prod.yml"
-RESULTS_DIR="./jmeter/results"
-REPORT_DIR="./jmeter/report"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -21,7 +19,7 @@ print_status() {
 # Function to check if a service is healthy
 check_health() {
     local service=$1
-    local max_attempts=30
+    local max_attempts=30  # Increased for production
     local attempt=1
 
     while [ $attempt -le $max_attempts ]; do
@@ -29,34 +27,30 @@ check_health() {
             return 0
         fi
         print_status "$YELLOW" "Waiting for $service to be healthy... (Attempt $attempt/$max_attempts)"
-        sleep 5
+        sleep 10  # Increased wait time for production
         ((attempt++))
     done
     return 1
 }
 
-# Function to check system resources
+# Function to check resource availability
 check_resources() {
-    print_status "$YELLOW" "Checking system resources..."
+    local required_memory=16  # GB, for both k6 and JMeter
+    local available_memory=$(free -g | awk '/^Mem:/{print $7}')
     
-    # Check available memory
-    local available_mem=$(free -g | awk '/^Mem:/{print $7}')
-    if [ $available_mem -lt 8 ]; then
-        print_status "$RED" "Warning: Less than 8GB of available memory ($available_mem GB)"
-        print_status "$RED" "Production benchmarks require at least 8GB of available memory"
-        return 1
+    if [ $available_memory -lt $required_memory ]; then
+        print_status "$RED" "Warning: Available memory ($available_memory GB) is less than recommended ($required_memory GB)"
+        read -p "Do you want to continue anyway? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
     fi
-
-    # Check available disk space
-    local available_disk=$(df -BG . | awk 'NR==2 {print $4}' | sed 's/G//')
-    if [ $available_disk -lt 20 ]; then
-        print_status "$RED" "Warning: Less than 20GB of available disk space ($available_disk GB)"
-        print_status "$RED" "Production benchmarks require at least 20GB of free disk space"
-        return 1
-    fi
-
-    return 0
 }
+
+# Check resources before starting
+print_status "$YELLOW" "Checking system resources..."
+check_resources
 
 # Validate connections first
 print_status "$YELLOW" "Validating connections..."
@@ -64,18 +58,6 @@ if ! ./validate-connection.sh prod; then
     print_status "$RED" "Connection validation failed. Please fix the issues and try again."
     exit 1
 fi
-
-# Check system resources
-if ! check_resources; then
-    read -p "Continue despite resource warnings? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
-fi
-
-# Create results directory
-mkdir -p $RESULTS_DIR $REPORT_DIR
 
 # Start monitoring stack
 print_status "$GREEN" "Starting monitoring stack..."
@@ -89,30 +71,41 @@ fi
 
 print_status "$GREEN" "Monitoring stack is ready"
 
+# Warm-up period
+print_status "$YELLOW" "Waiting for 30 seconds warm-up period..."
+sleep 30
+
 # Run k6 tests with production configuration
 print_status "$GREEN" "Starting k6 tests..."
+print_status "$YELLOW" "This will take approximately 30 minutes..."
 $DOCKER_COMPOSE run k6
+
+# Short pause between tests
+print_status "$YELLOW" "Waiting 1 minute before starting JMeter test..."
+sleep 60
 
 # Run JMeter tests with production configuration
 print_status "$GREEN" "Starting JMeter tests..."
-$DOCKER_COMPOSE run --rm jmeter -n \
-    -t /jmeter/loan-process-test.jmx \
-    -l /results/results.jtl \
-    -e -o /results/report
-
-# Generate combined report
-print_status "$GREEN" "Generating combined report..."
-$DOCKER_COMPOSE run --rm jmeter -g /results/results.jtl -o /results/report
+print_status "$YELLOW" "This will take approximately 30 minutes..."
+$DOCKER_COMPOSE run --rm jmeter
 
 print_status "$GREEN" "Benchmarks completed!"
-print_status "$GREEN" "Results available in:"
-print_status "$GREEN" "- k6: Grafana Dashboard (http://localhost:3000)"
-print_status "$GREEN" "- JMeter: ./jmeter/results/report"
+print_status "$GREEN" "Results available in Grafana Dashboard (http://localhost:3000)"
+print_status "$YELLOW" "Note: Production metrics will be preserved in InfluxDB volume"
 
 # Optional: Stop services
 read -p "Do you want to stop the monitoring stack? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     print_status "$YELLOW" "Stopping monitoring stack..."
-    $DOCKER_COMPOSE down -v
+    print_status "$RED" "Warning: This will preserve the InfluxDB data volume"
+    read -p "Do you also want to remove all data volumes? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        $DOCKER_COMPOSE down -v
+        print_status "$YELLOW" "All services and volumes removed"
+    else
+        $DOCKER_COMPOSE down
+        print_status "$YELLOW" "Services stopped, data volumes preserved"
+    fi
 fi

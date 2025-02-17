@@ -2,8 +2,6 @@
 
 # Configuration
 DOCKER_COMPOSE="docker-compose -f docker-compose.benchmark.dev.yml"
-RESULTS_DIR="./jmeter/results"
-REPORT_DIR="./jmeter/report"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -42,9 +40,6 @@ if ! ./validate-connection.sh dev; then
     exit 1
 fi
 
-# Create results directory
-mkdir -p $RESULTS_DIR $REPORT_DIR
-
 # Start monitoring stack
 print_status "$GREEN" "Starting monitoring stack..."
 $DOCKER_COMPOSE up -d influxdb grafana
@@ -63,15 +58,10 @@ $DOCKER_COMPOSE run k6
 
 # Run JMeter tests with development configuration
 print_status "$GREEN" "Starting JMeter tests..."
-$DOCKER_COMPOSE run --rm jmeter -n \
-    -t /jmeter/loan-process-test.jmx \
-    -l /results/results.jtl \
-    -e -o /results/report
+$DOCKER_COMPOSE run --rm jmeter
 
 print_status "$GREEN" "Benchmarks completed!"
-print_status "$GREEN" "Results available in:"
-print_status "$GREEN" "- k6: Grafana Dashboard (http://localhost:3000)"
-print_status "$GREEN" "- JMeter: ./jmeter/results/report"
+print_status "$GREEN" "Results available in Grafana Dashboard (http://localhost:3000)"
 
 # Optional: Stop services
 read -p "Do you want to stop the monitoring stack? (y/n) " -n 1 -r
