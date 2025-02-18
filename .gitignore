@@ -1,0 +1,35 @@
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Dependency directories
+node_modules/
+target/
+dist/
+
+# Build output
+*.class
+*.jar
+*.war
+
+# Test results and logs
+**/jmeter/results/
+*.jtl
+*.log
+test-results/
+reports/
+
+# Docker volumes
+**/data/
+
+# Environment files
+.env
+.env.local
+*.env.local
+
+# Operating System
+.DS_Store
+Thumbs.db
