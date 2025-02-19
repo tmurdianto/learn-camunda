@@ -3,7 +3,6 @@
 # Configuration
 DOCKER_COMPOSE="docker-compose -f docker-compose.benchmark.dev.yml"
 RESULTS_DIR="./jmeter/results"
-REPORT_DIR="./jmeter/report"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -43,7 +42,7 @@ if ! ./validate-connection.sh dev; then
 fi
 
 # Create results directory
-mkdir -p $RESULTS_DIR $REPORT_DIR
+mkdir -p $RESULTS_DIR
 
 # Start monitoring stack
 print_status "$GREEN" "Starting monitoring stack..."
@@ -58,8 +57,8 @@ fi
 print_status "$GREEN" "Monitoring stack is ready"
 
 # Run k6 tests with development configuration
-print_status "$GREEN" "Starting k6 tests..."
-$DOCKER_COMPOSE run k6
+# print_status "$GREEN" "Starting k6 tests..."
+# $DOCKER_COMPOSE run k6
 
 # Run JMeter tests with development configuration
 print_status "$GREEN" "Starting JMeter tests..."

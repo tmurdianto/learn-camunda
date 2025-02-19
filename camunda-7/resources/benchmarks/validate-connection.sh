@@ -23,7 +23,7 @@ check_url() {
     print_status "$YELLOW" "Checking connection to $url..."
     
     while [ $attempt -le $max_attempts ]; do
-        if curl -s -f "$url/engine-rest/version" > /dev/null; then
+        if docker run --rm curlimages/curl -s -f "$url/engine-rest/version" > /dev/null; then
             print_status "$GREEN" "✓ Successfully connected to Camunda at $url"
             return 0
         fi

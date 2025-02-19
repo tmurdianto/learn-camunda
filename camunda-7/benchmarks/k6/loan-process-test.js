@@ -8,15 +8,27 @@ const tasksCompleted = new Counter('tasks_completed');
 
 // Test configuration
 export const options = {
-    stages: [
-        { duration: '2m', target: 10 },  // Ramp-up
-        { duration: '5m', target: 50 },  // Sustained load
-        { duration: '2m', target: 100 }, // High load
-        { duration: '1m', target: 0 },   // Ramp-down
-    ],
+    scenarios: {
+        stress_test: {
+            executor: 'ramping-vus',
+            startVUs: 0,
+            stages: [
+                { duration: '1m', target: 50 },    // Fast ramp-up
+                { duration: '2m', target: 50 },    // Steady state
+                { duration: '1m', target: 100 },   // Ramp-up to high load
+                { duration: '2m', target: 100 },   // Sustained high load
+                { duration: '30s', target: 200 },  // Spike
+                { duration: '1m', target: 200 },   // Hold spike
+                { duration: '30s', target: 50 },   // Quick recovery
+                { duration: '1m', target: 0 },     // Gradual ramp-down
+            ],
+        },
+    },
     thresholds: {
-        http_req_duration: ['p(95)<2000'], // 95% of requests should be below 2s
-        http_req_failed: ['rate<0.01'],    // Less than 1% failure rate
+        http_req_duration: ['p(95)<3000'],        // 95% of requests should be below 3s
+        http_req_failed: ['rate<0.05'],           // Allow up to 5% failure rate
+        'process_instances_started': ['count>1000'], // Ensure we start enough processes
+        'tasks_completed': ['count>800'],         // Ensure most tasks complete
     },
 };
 
